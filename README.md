@@ -1,6 +1,6 @@
 # Arca Dbutils
 
-Dump/load a Postgres db to/from an SQL dump file.
+Arca Dbutils is a set of simple db utilities for Elixir projects
 
 ## Installation
 
