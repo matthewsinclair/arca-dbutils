@@ -140,4 +140,104 @@ defmodule Arca.Dbutils.DumperTest do
       end
     end
   end
+  
+  describe "load/1" do
+    test "succeeds with all required params and finds psql" do
+      # Create a temporary SQL file for testing
+      sql_file = Path.join(System.tmp_dir(), "test_load.sql")
+      File.write!(sql_file, "SELECT 1;")
+      
+      opts = [
+        host: "localhost",
+        user: "postgres",
+        password: "secret",
+        dbname: "test_db",
+        file: sql_file
+      ]
+
+      with_mocks([
+        {
+          System,
+          [:passthrough],
+          [
+            find_executable: fn "psql" ->
+              "/usr/local/bin/psql"
+            end,
+            cmd: fn
+              # Mock psql call
+              "/usr/local/bin/psql", _args, _opts ->
+                {"Load complete", 0}
+            end
+          ]
+        }
+      ]) do
+        captured_output =
+          capture_io(fn ->
+            # On success, code returns {:ok, :loaded}
+            assert {:ok, :loaded} = Dumper.load(opts)
+          end)
+
+        assert captured_output =~ "postgres://postgres:*****@localhost/test_db"
+        
+        # Clean up temp file
+        File.rm(sql_file)
+      end
+    end
+
+    test "fails if psql is not found" do
+      opts = [
+        host: "localhost",
+        user: "postgres",
+        password: "secret",
+        dbname: "test_db",
+        file: "test.sql"
+      ]
+
+      with_mocks([
+        {
+          System,
+          [:passthrough],
+          [
+            find_executable: fn "psql" -> nil end
+          ]
+        }
+      ]) do
+        captured_output =
+          capture_io(fn ->
+            assert {:error, :psql_not_found} = Dumper.load(opts)
+          end)
+
+        assert captured_output =~ "Error: `psql` not found on your PATH."
+      end
+    end
+    
+    test "fails if SQL file does not exist" do
+      opts = [
+        host: "localhost",
+        user: "postgres",
+        password: "secret",
+        dbname: "test_db",
+        file: "/nonexistent/file.sql"
+      ]
+
+      with_mocks([
+        {
+          System,
+          [:passthrough],
+          [
+            find_executable: fn "psql" ->
+              "/usr/local/bin/psql"
+            end
+          ]
+        }
+      ]) do
+        captured_output =
+          capture_io(fn ->
+            assert {:error, "SQL file does not exist"} = Dumper.load(opts)
+          end)
+
+        assert captured_output =~ "does not exist"
+      end
+    end
+  end
 end

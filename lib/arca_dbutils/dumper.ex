@@ -31,6 +31,15 @@ defmodule Arca.Dbutils.Dumper do
     * `{:ok, filename}` on success
     * `{:error, reason}` on failure
   """
+  @type dump_opts :: [
+    url: String.t(),
+    host: String.t(),
+    user: String.t(),
+    password: String.t(),
+    dbname: String.t(),
+    port: non_neg_integer() | nil
+  ]
+  @spec dump(dump_opts()) :: {:ok, String.t()} | {:error, atom() | String.t()}
   def dump(opts \\ []) do
     # 1) Ensure pg_dump is installed
     case System.find_executable("pg_dump") do
@@ -136,6 +145,16 @@ defmodule Arca.Dbutils.Dumper do
     * `{:ok, :loaded}` on success
     * `{:error, reason}` on failure
   """
+  @type load_opts :: [
+    url: String.t(),
+    host: String.t(), 
+    user: String.t(),
+    password: String.t(),
+    dbname: String.t(),
+    port: non_neg_integer() | nil,
+    file: String.t()
+  ]
+  @spec load(load_opts()) :: {:ok, :loaded} | {:error, atom() | String.t()}
   def load(opts \\ []) do
     # 1) Ensure psql is installed
     case System.find_executable("psql") do
@@ -166,31 +185,38 @@ defmodule Arca.Dbutils.Dumper do
     if is_nil(file) or file == "" do
       IO.puts("Error: Missing SQL file to load.")
       {:error, "Missing SQL file"}
-    end
-
-    # Show start message
-    redacted_url = build_redacted_url(db_config)
-    IO.puts("Starting database load from file. Using DB URL: #{redacted_url}")
-
-    spinner_pid = start_spinner("Loading database...")
-
-    # Build psql args
-    cmd_args = build_load_args(db_config, file)
-    env_vars = [{"PGPASSWORD", db_config.password}]
-
-    {output, exit_status} = System.cmd(psql_path, cmd_args, env: env_vars, stderr_to_stdout: true)
-
-    stop_spinner(spinner_pid)
-
-    if exit_status == 0 do
-      # IO.puts("✅ Successfully loaded data from #{file}")
-      # IO.puts("Done.")
-      {:ok, :loaded}
     else
-      IO.puts("❌ psql failed with exit code #{exit_status}")
-      IO.puts("Output: #{output}")
-      # IO.puts("Done.")
-      {:error, :psql_failed}
+      # Check if file exists
+      unless File.exists?(file) do
+        IO.puts("Error: SQL file '#{file}' does not exist.")
+        {:error, "SQL file does not exist"}
+      else
+
+        # Show start message
+        redacted_url = build_redacted_url(db_config)
+        IO.puts("Starting database load from file. Using DB URL: #{redacted_url}")
+
+        spinner_pid = start_spinner("Loading database...")
+
+        # Build psql args
+        cmd_args = build_load_args(db_config, file)
+        env_vars = [{"PGPASSWORD", db_config.password}]
+
+        {output, exit_status} = System.cmd(psql_path, cmd_args, env: env_vars, stderr_to_stdout: true)
+
+        stop_spinner(spinner_pid)
+
+        if exit_status == 0 do
+          # IO.puts("✅ Successfully loaded data from #{file}")
+          # IO.puts("Done.")
+          {:ok, :loaded}
+        else
+          IO.puts("❌ psql failed with exit code #{exit_status}")
+          IO.puts("Output: #{output}")
+          # IO.puts("Done.")
+          {:error, :psql_failed}
+        end
+      end
     end
   end
 
