@@ -2,10 +2,10 @@ defmodule Arca.Dbutils.Helper do
   @moduledoc """
   Helper functions for Arca.Dbutils modules, particularly for command-line argument parsing.
   """
-  
+
   @doc """
   Parses command line arguments in the form of "key=value" into keyword list.
-  
+
   ## Parameters
     * `args` - List of strings in the format "key=value"
     

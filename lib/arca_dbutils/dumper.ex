@@ -32,13 +32,13 @@ defmodule Arca.Dbutils.Dumper do
     * `{:error, reason}` on failure
   """
   @type dump_opts :: [
-    url: String.t(),
-    host: String.t(),
-    user: String.t(),
-    password: String.t(),
-    dbname: String.t(),
-    port: non_neg_integer() | nil
-  ]
+          url: String.t(),
+          host: String.t(),
+          user: String.t(),
+          password: String.t(),
+          dbname: String.t(),
+          port: non_neg_integer() | nil
+        ]
   @spec dump(dump_opts()) :: {:ok, String.t()} | {:error, atom() | String.t()}
   def dump(opts \\ []) do
     # 1) Ensure pg_dump is installed
@@ -146,14 +146,14 @@ defmodule Arca.Dbutils.Dumper do
     * `{:error, reason}` on failure
   """
   @type load_opts :: [
-    url: String.t(),
-    host: String.t(), 
-    user: String.t(),
-    password: String.t(),
-    dbname: String.t(),
-    port: non_neg_integer() | nil,
-    file: String.t()
-  ]
+          url: String.t(),
+          host: String.t(),
+          user: String.t(),
+          password: String.t(),
+          dbname: String.t(),
+          port: non_neg_integer() | nil,
+          file: String.t()
+        ]
   @spec load(load_opts()) :: {:ok, :loaded} | {:error, atom() | String.t()}
   def load(opts \\ []) do
     # 1) Ensure psql is installed
@@ -191,7 +191,6 @@ defmodule Arca.Dbutils.Dumper do
         IO.puts("Error: SQL file '#{file}' does not exist.")
         {:error, "SQL file does not exist"}
       else
-
         # Show start message
         redacted_url = build_redacted_url(db_config)
         IO.puts("Starting database load from file. Using DB URL: #{redacted_url}")
@@ -202,7 +201,8 @@ defmodule Arca.Dbutils.Dumper do
         cmd_args = build_load_args(db_config, file)
         env_vars = [{"PGPASSWORD", db_config.password}]
 
-        {output, exit_status} = System.cmd(psql_path, cmd_args, env: env_vars, stderr_to_stdout: true)
+        {output, exit_status} =
+          System.cmd(psql_path, cmd_args, env: env_vars, stderr_to_stdout: true)
 
         stop_spinner(spinner_pid)
 

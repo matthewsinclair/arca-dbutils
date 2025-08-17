@@ -140,13 +140,13 @@ defmodule Arca.Dbutils.DumperTest do
       end
     end
   end
-  
+
   describe "load/1" do
     test "succeeds with all required params and finds psql" do
       # Create a temporary SQL file for testing
       sql_file = Path.join(System.tmp_dir(), "test_load.sql")
       File.write!(sql_file, "SELECT 1;")
-      
+
       opts = [
         host: "localhost",
         user: "postgres",
@@ -178,7 +178,7 @@ defmodule Arca.Dbutils.DumperTest do
           end)
 
         assert captured_output =~ "postgres://postgres:*****@localhost/test_db"
-        
+
         # Clean up temp file
         File.rm(sql_file)
       end
@@ -210,7 +210,7 @@ defmodule Arca.Dbutils.DumperTest do
         assert captured_output =~ "Error: `psql` not found on your PATH."
       end
     end
-    
+
     test "fails if SQL file does not exist" do
       opts = [
         host: "localhost",
